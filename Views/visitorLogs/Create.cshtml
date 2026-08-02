@@ -1,0 +1,159 @@
+﻿@model WebApplication1.Models.visitorLog
+
+@{
+    ViewData["Title"] = "Yeni Araç Kaydı";
+}
+
+
+<div class="container mt-5" style="max-width: 600px;">
+
+    <div class="p-4 bg-light border border-light-subtle rounded-3 text-center shadow-sm mb-4">
+        <h3 class="fw-black text-dark m-0 tracking-tight">KARDEMİR</h3>
+        <small class="text-muted text-uppercase tracking-wider font-monospace" style="font-size: 11px;">Yeni Araç Giriş Protokolü</small>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-5">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-4">
+                    <label asp-for="plaka" class="form-label fw-bold text-secondary small text-uppercase">Araç Plakası</label>
+                    <input asp-for="plaka" class="form-control form-control-lg bg-light border-light-subtle shadow-none" placeholder="Örn: 78 AB 123" required oninput="if(this.value.length > 11) this.value = this.value.slice(0, 11);" />
+                    <span asp-validation-for="plaka" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="adSoyad" class="form-label fw-bold text-secondary small text-uppercase">Sürücü Ad Soyad</label>
+                    <input asp-for="adSoyad" class="form-control form-control-lg bg-light border-light-subtle shadow-none" placeholder="Ad Soyad giriniz" required oninput="if(this.value.length > 40) this.value = this.value.slice(0, 40);" />
+                    <span asp-validation-for="adSoyad" class="text-danger small"></span>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label fw-bold text-secondary small text-uppercase">Bireysel/Kurumsal </label>
+                    <input type="text" id="firmaArama" class="form-control form-control-lg bg-light border-light-subtle shadow-none" placeholder="Bireysel ya da Firma adını yazınız.">
+                    <input type="hidden" asp-for="FirmaId" id="gizliFirmaId">
+                </div>
+
+                <div class="form-group mb-4" id="geciciFirmaAlani" style="display:none;">
+                    <label class="text-danger">Firma Bulunamadı!</label>
+                    <input type="text" id="GeciciFirmaAdi" class="form-control" placeholder="Firmanın adını yöneticinize bildirin...">
+                    <button type="button" id="btnTalepGonder" class="btn btn-warning mt-2">Talep Gönder</button>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="telefonNo" class="form-label fw-bold text-secondary small text-uppercase">Telefon Numarası</label>
+                    <input asp-for="telefonNo" class="form-control form-control-lg bg-light border-light-subtle shadow-none" placeholder="05XX XXX XX XX" required oninput="if(this.value.length > 11) this.value = this.value.slice(0, 11);" />
+                    <span asp-validation-for="telefonNo" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="ziyaretNedeni" class="form-label fw-bold text-secondary small text-uppercase">Ziyaret Nedeni</label>
+                    <input asp-for="ziyaretNedeni" class="form-control form-control-lg bg-light border-light-subtle shadow-none" placeholder="Örn: İdari Ziyaret" required oninput="if(this.value.length > 30) this.value = this.value.slice(0, 30);" />
+                    <span asp-validation-for="ziyaretNedeni" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-5">
+                    <label asp-for="kacKisi" class="form-label fw-bold text-secondary small text-uppercase">Kişi Sayısı</label>
+                    <input asp-for="kacKisi" type="number" min="1" oninput="if(this.value > 6) this.value = 6;" class="form-control form-control-lg bg-light border-light-subtle shadow-none" placeholder="Örn: 3" required  />
+                    <span asp-validation-for="kacKisi" class="text-danger small"></span>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" id="btnKaydet" class="btn btn-dark btn-lg fw-bold rounded-2 shadow-sm">
+                        Sisteme Kaydet
+                    </button>
+                    <a href="/visitorLogs/Index" class="btn btn-link text-decoration-none text-muted fw-bold mt-2">
+                        İptal ve Listeye Dön
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            
+            $("#firmaArama").autocomplete({
+                minLength: 1,
+                source: function (request, response) {
+                    $.ajax({
+                        url: '/Firma/FirmaAra',
+                        type: 'GET',
+                        dataType: 'json',
+                        data: { arananKelime: request.term },
+                        success: function (data) {
+                            if (data.length === 0) {
+                                
+                                response([{ label: "Diğer", value: -1 }]);
+                            } else {
+                               
+                                response($.map(data, function (item) {
+                                    return { label: item.text, value: item.id };
+                                }));
+                            }
+                        }
+                    });
+                },
+                select: function (event, ui) {
+                    if (ui.item.value === -1) {
+                        
+                        $("#firmaArama").val("Firma adını bildirin");
+                        $("#gizliFirmaId").val("");
+                        $("#btnKaydet").prop("disabled", true); 
+                        $("#geciciFirmaAlani").slideDown(); 
+                    } else {
+                        
+                        $("#firmaArama").val(ui.item.label);
+                        $("#gizliFirmaId").val(ui.item.value);
+                        $("#btnKaydet").prop("disabled", false); 
+                        $("#geciciFirmaAlani").slideUp();
+                    }
+                    return false;
+                }
+            });
+
+            $("#firmaArama").on("input", function() {
+                $("#gizliFirmaId").val("");
+                $("#btnKaydet").prop("disabled", false);
+                $("#geciciFirmaAlani").slideUp();
+            });
+
+            $("#btnTalepGonder").click(function () {
+                var yeniFirma = $("#GeciciFirmaAdi").val();
+
+                if (yeniFirma.length < 2) {
+                    alert("Geçersiz Firma Adı");
+                    return;
+                }
+
+                
+                $.ajax({
+                    url: '/Firma/YeniFirmaTalebi',
+                    type: 'POST',
+                    data: { firmaAdi: yeniFirma },
+                    success: function (res) {
+                        alert("Talep gönderildi. Onaylandığında listede firma adı gözükecektir.");
+                        $("#GeciciFirmaAdi").val(""); 
+                        $("#geciciFirmaAlani").slideUp();
+                        $("#firmaArama").val(""); 
+                    },
+                    error: function () {
+                        alert("Talep gönderilirken bir hata oluştu!");
+                    }
+                });
+            });
+
+        });
+    </script>
+}
+

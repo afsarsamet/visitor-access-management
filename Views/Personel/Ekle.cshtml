@@ -1,0 +1,338 @@
+﻿@model WebApplication1.Models.Personel
+
+@{
+    ViewData["Title"] = "Yeni Personel Kaydı";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-5">
+                    <div class="mb-4">
+                        <h4 class="fw-black text-dark m-0">Yeni Personel Tanımlama</h4>
+                        <small class="text-muted">Sisteme erişim sağlayacak yeni personelin bilgilerini giriniz.</small>
+                    </div>
+
+                    <form asp-action="Ekle" method="post">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase">Ad Soyad</label>
+                            <input asp-for="AdSoyad" class="form-control" required maxlength="40"/>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Sicil No</label>
+                                <input asp-for="SicilNo" class="form-control" required maxlength="6"/>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-uppercase">
+                                    T.C. Kimlik No
+                                </label>
+
+                                <input asp-for="TCNo"
+                                       id="TCNo"
+                                       type="text"
+                                       inputmode="numeric"
+                                       class="form-control"
+                                       required
+                                       minlength="11"
+                                       maxlength="11"
+                                       pattern="[0-9]{11}"
+                                       autocomplete="off" />
+
+                                <small id="tcDurum" class="form-text text-muted">
+                                    T.C. kimlik numarası 11 rakam olmalıdır.
+                                </small>
+
+                                <span asp-validation-for="TCNo" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Telefon No</label>
+                                <input asp-for="TelefonNo" class="form-control" required maxlength="11"/>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-uppercase">
+                                    Geçici Şifre
+                                </label>
+
+                                <div class="input-group">
+                                    <input asp-for="sifre"
+                                           id="sifre"
+                                           type="text"
+                                           class="form-control fw-bold"
+                                           readonly
+                                           required
+                                           autocomplete="off" />
+
+                                    <button type="button"
+                                            id="sifreUretBtn"
+                                            class="btn btn-outline-dark">
+                                        Üret
+                                    </button>
+
+                                    <button type="button"
+                                            id="sifreKopyalaBtn"
+                                            class="btn btn-outline-secondary">
+                                        Kopyala
+                                    </button>
+                                </div>
+
+                                <small id="sifreDurum" class="form-text text-muted">
+                                    Şifre otomatik oluşturulacaktır.
+                                </small>
+
+                                <span asp-validation-for="sifre" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Sistem Rolü</label>
+                                <select asp-for="rol" class="form-select">
+                                    <option value="Güvenlik">Güvenlik Görevlisi</option>
+                                    <option value="Admin">Sistem Yöneticisi</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3 d-flex align-items-center pt-4">
+                                <div class="form-check">
+                                    <input asp-for="AktifMi" class="form-check-input" type="checkbox" checked />
+                                    <label class="form-check-label fw-bold small text-uppercase">Hesap Aktif mi?</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-dark fw-bold w-100 py-2">PERSONELİ KAYDET</button>
+                            <a href="/visitorLogs/Index" class="btn btn-outline-secondary w-100 py-2">İPTAL</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const sifreInput = document.getElementById("sifre");
+            const sifreUretBtn = document.getElementById("sifreUretBtn");
+            const sifreKopyalaBtn = document.getElementById("sifreKopyalaBtn");
+            const sifreDurum = document.getElementById("sifreDurum");
+
+            const buyukHarfler = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+            const kucukHarfler = "abcdefghijkmnopqrstuvwxyz";
+            const rakamlar = "23456789";
+            const ozelKarakterler = "!@@#$%&*?";
+
+            const tumKarakterler =
+                buyukHarfler +
+                kucukHarfler +
+                rakamlar +
+                ozelKarakterler;
+
+            function rastgeleSayiUret(maksimum) {
+                const sayilar = new Uint32Array(1);
+                window.crypto.getRandomValues(sayilar);
+                return sayilar[0] % maksimum;
+            }
+
+            function rastgeleKarakterAl(karakterler) {
+                const index = rastgeleSayiUret(karakterler.length);
+                return karakterler[index];
+            }
+
+            function karakterleriKaristir(karakterDizisi) {
+                for (let i = karakterDizisi.length - 1; i > 0; i--) {
+                    const j = rastgeleSayiUret(i + 1);
+
+                    const gecici = karakterDizisi[i];
+                    karakterDizisi[i] = karakterDizisi[j];
+                    karakterDizisi[j] = gecici;
+                }
+                return karakterDizisi;
+            }
+            function sifreUret() {
+                const sifreUzunlugu = 8;
+
+                const sifreKarakterleri = [
+                    rastgeleKarakterAl(buyukHarfler),
+                    rastgeleKarakterAl(kucukHarfler),
+                    rastgeleKarakterAl(rakamlar),
+                    rastgeleKarakterAl(ozelKarakterler)
+                ];
+
+                while (sifreKarakterleri.length < sifreUzunlugu) {
+                    sifreKarakterleri.push(
+                        rastgeleKarakterAl(tumKarakterler)
+                    );
+                }
+                karakterleriKaristir(sifreKarakterleri);
+
+                return sifreKarakterleri.join("");
+            }
+
+            async function sifreyiKopyala() {
+                const sifre = sifreInput.value;
+
+                if (!sifre) {
+                    sifreDurum.textContent = "Kopyalanacak şifre bulunamadı.";
+                    sifreDurum.className = "form-text text-danger";
+                    return;
+                }
+
+                try {
+                    await navigator.clipboard.writeText(sifre);
+
+                    sifreDurum.textContent = "Şifre panoya kopyalandı.";
+                    sifreDurum.className = "form-text text-success fw-bold";
+                }
+                catch {
+                    sifreInput.select();
+                    sifreInput.setSelectionRange(0, sifre.length);
+
+                    document.execCommand("copy");
+
+                    sifreDurum.textContent = "Şifre panoya kopyalandı.";
+                    sifreDurum.className = "form-text text-success fw-bold";
+                }
+            }
+
+            function yeniSifreOlustur() {
+                sifreInput.value = sifreUret();
+
+                sifreDurum.textContent =
+                    "8 karakterli güçlü şifre oluşturuldu.";
+
+                sifreDurum.className = "form-text text-success";
+            }
+
+            sifreUretBtn.addEventListener("click", async function () {
+                yeniSifreOlustur();
+                await sifreyiKopyala();
+            });
+
+            sifreKopyalaBtn.addEventListener("click", async function () {
+                await sifreyiKopyala();
+            });
+
+
+                function tcKontrolEt(tc) {
+
+           
+            if (!/^\d{11}$/.test(tc)) {  return false; }
+
+            if (tc[0] === "0") {  return false; }
+
+            const rakamlar = tc.split("").map(Number);
+
+            let ilkOnRakamToplami = 0;
+
+            for (let i = 0; i < 10; i++) {
+                ilkOnRakamToplami += rakamlar[i];
+            }
+
+            const hesaplananSonRakam = ilkOnRakamToplami % 10;
+            const girilenSonRakam = rakamlar[10];
+
+           
+            if (girilenSonRakam % 2 !== 0) { return false; }
+
+            return hesaplananSonRakam === girilenSonRakam;
+        }
+
+                const tcInput = document.getElementById("TCNo");
+                const tcDurum = document.getElementById("tcDurum");
+                const personelFormu = tcInput.closest("form");
+
+        tcInput.addEventListener("input", function () {
+
+            
+            tcInput.value = tcInput.value
+                .replace(/\D/g, "")
+                .slice(0, 11);
+
+            const tc = tcInput.value;
+
+            if (tc.length === 0) {
+                tcDurum.textContent =
+                    "T.C. kimlik numarası 11 rakam olmalıdır.";
+
+                tcDurum.className = "form-text text-muted";
+                tcInput.classList.remove("is-valid", "is-invalid");
+                tcInput.setCustomValidity("");
+                return;
+            }
+
+            if (tc.length < 11) {
+                tcDurum.textContent =
+                    `${tc.length}/11 rakam girildi.`;
+
+                tcDurum.className = "form-text text-warning";
+                tcInput.classList.remove("is-valid");
+                tcInput.classList.add("is-invalid");
+
+                tcInput.setCustomValidity(
+                    "T.C. kimlik numarası 11 rakam olmalıdır."
+                );
+
+                return;
+            }
+
+            // Yazılan 11 hane belirlediğimiz kurala uyuyor mu?
+            if (tcKontrolEt(tc)) {
+                tcDurum.textContent =
+                    "T.C. kimlik numarası geçerli.";
+
+                tcDurum.className =
+                    "form-text text-success fw-bold";
+
+                tcInput.classList.remove("is-invalid");
+                tcInput.classList.add("is-valid");
+
+                tcInput.setCustomValidity("");
+            }
+            else {
+                tcDurum.textContent =
+                    "T.C. kimlik numarası geçersiz.";
+
+                tcDurum.className =
+                    "form-text text-danger fw-bold";
+
+                tcInput.classList.remove("is-valid");
+                tcInput.classList.add("is-invalid");
+
+                tcInput.setCustomValidity(
+                    "Geçerli bir T.C. kimlik numarası giriniz."
+                );
+            }
+        });
+                personelFormu.addEventListener("submit", function (event) {
+
+            const tc = tcInput.value;
+
+            if (!tcKontrolEt(tc)) {
+                event.preventDefault();
+
+                tcInput.classList.add("is-invalid");
+
+                tcDurum.textContent =
+                    "Personel kaydedilemedi. T.C. kimlik numarasını kontrol ediniz.";
+
+                tcDurum.className =
+                    "form-text text-danger fw-bold";
+
+                tcInput.focus();
+                tcInput.reportValidity();
+            }
+        });
+            
+        });
+
+            
+    </script>
+}

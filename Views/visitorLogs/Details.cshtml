@@ -1,0 +1,45 @@
+﻿@model WebApplication1.Models.visitorLog
+
+@{
+	ViewData["Title"] = "Araç Detayları";
+}
+
+
+<div class="card border-0 shadow-sm rounded-3">
+<table>
+	<tr>
+		<th>Plaka</th>
+		<th>Ad Soyad</th>
+		<th>Ziyaretçi Firma</th>
+		<th>Ziyaret Nedeni</th>
+		<th>Telefon No</th>
+		<th>Kişi Sayısı</th>
+		<th>Giriş Zamanı</th>
+		<th>Durum</th>
+	</tr>
+
+
+		<tr>
+			<td>@Model.plaka</td>
+			<td>@Model.adSoyad</td>
+			<td>@Model.Firma.FirmaAdi</td>
+			<td>@Model.ziyaretNedeni</td>
+				
+			<td>@Model.telefonNo</td>
+			<td>@Model.kacKisi</td>
+			<td>@Model.girisZamani.ToString("dd.MM.yyyy HH:mm")</td>
+			<td class="durum-sutunu">
+				@if (Model.asimVarMi)
+				{
+					<span>Aşım var</span>
+				}
+				else
+				{
+					<span>Güvenli</span>
+				}
+				</td>
+			</tr>
+	
+	</table>
+	<button type="button" class="btn btn-dark mt-3" onclick="window.location.href='/visitorLogs/Index'">Geri Dön</button>
+</div>

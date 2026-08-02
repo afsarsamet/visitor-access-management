@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "Güvenlik Noktası";
+    
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm rounded-3 mt-5">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h3 class="fw-black text-dark tracking-tight m-0">KARDEMİR</h3>
+                        <small class="text-muted text-uppercase tracking-wider font-monospace" style="font-size: 11px;">Operasyon Merkezi Girişi</small>
+                    </div>
+
+                    @if (ViewBag.Hata != null)
+                    {
+                        <div class="alert alert-danger text-center small fw-bold py-2">
+                            @ViewBag.Hata
+                        </div>
+                    }
+
+                    <form method="post" asp-action="Index" asp-controller="Giris">
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-bold text-uppercase">Sicil Numarası</label>
+                            <input type="number" name="SicilNo" oninput="if(this.value.length > 6) this.value = this.value.slice(0, 6);" class="form-control form-control-lg bg-light border-light-subtle shadow-none" required autofocus />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-secondary small fw-bold text-uppercase">Şifre</label>
+                            <input type="password" name="sifre" class="form-control form-control-lg bg-light border-light-subtle shadow-none" required />
+                        </div>
+
+                        <button type="submit" class="btn btn-dark btn-lg w-100 fw-bold rounded-2 shadow-sm">
+                            SİSTEME GİRİŞ YAP
+                        </button>
+                    </form>
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

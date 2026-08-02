@@ -1,0 +1,117 @@
+﻿@model List<WebApplication1.Models.visitorLog>
+@{
+    ViewData["Title"] = "Gelişmiş Raporlama";
+}
+
+<div class="container mt-5">
+    
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="p-4 bg-light border border-light-subtle rounded-3 d-flex justify-content-between align-items-center shadow-sm">
+                <div>
+                    <h3 class="fw-black text-dark m-0 tracking-tight">KARDEMİR</h3>
+                    <small class="text-muted text-uppercase tracking-wider font-monospace" style="font-size: 11px;">Raporlama & Analiz</small>
+                </div>
+                <div>
+                    
+                    <a href="/Reports/ExportExcel?baslangic=@ViewBag.Baslangic&bitis=@ViewBag.Bitis&sadeceAsanlar=@(ViewBag.SadeceAsanlar == true ? "true" : "false")"
+                       class="btn btn-success btn-sm fw-bold px-4 py-2 rounded-2 shadow-sm">
+                         Excel Olarak İndir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body bg-white rounded-3">
+            <form asp-controller="Reports" asp-action="Index" method="get" class="row g-3 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="form-label text-muted fw-bold" style="font-size: 12px;">Başlangıç Tarihi</label>
+                    <input type="date" name="baslangic" class="form-control" value="@ViewBag.Baslangic" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label text-muted fw-bold" style="font-size: 12px;">Bitiş Tarihi</label>
+                    <input type="date" name="bitis" class="form-control" value="@ViewBag.Bitis" />
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-check mt-3 pt-2">
+                        
+                        <input class="form-check-input" type="checkbox" name="sadeceAsanlar" value="true" id="kuralFiltre" @(ViewBag.SadeceAsanlar == true ? "checked" : "")>
+                        <label class="form-check-label fw-bold text-danger" for="kuralFiltre">
+                            Sadece 4 Saat Kuralını Aşanları Getir
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-md-2 text-end">
+                    <button type="submit" class="btn btn-dark w-100 fw-bold shadow-sm">
+                         Filtrele
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted" style="font-size: 12px; letter-spacing: 0.5px;">
+                        <tr class="text-uppercase">
+                            <th class="ps-4 py-3">Plaka</th>
+                            <th class="py-3">Firma Adı</th>
+                            <th class="py-3">Sürücü Ad Soyad</th>
+                            <th class="py-3">Giriş Saati</th>
+                            <th class="py-3">Çıkış Saati</th>
+                            <th class="py-3 text-center">Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var arac in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">@arac.plaka</td>
+                                    <td class="text-secondary">@(arac.Firma != null ? arac.Firma.FirmaAdi : "Belirtilmemiş")</td>
+                                    <td class="text-secondary">@arac.adSoyad</td>
+                                    <td class="text-secondary">@arac.girisZamani.ToString("dd.MM.yyyy HH:mm")</td>
+
+                                    <td class="text-secondary fw-bold">
+                                        @(arac.cikisZamani.HasValue? arac.cikisZamani.Value.ToString("dd.MM.yyyy HH:mm") : "İçeride")
+                                    </td>
+
+                                    <td class="text-center">
+                                        @if (arac.asimVarMi)
+                                        {
+                                            <span class="badge rounded-pill bg-danger shadow-sm">Kural İhlali</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge rounded-pill bg-success shadow-sm">Sorunsuz</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <div class="fs-1 mb-2"></div>
+                                    <h6 class="fw-bold text-secondary">Kayıt Bulunamadı</h6>
+                                    <small>Seçtiğiniz tarih aralığında herhangi bir araç hareketi yok.</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

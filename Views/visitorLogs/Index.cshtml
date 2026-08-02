@@ -1,0 +1,134 @@
+﻿@model List<WebApplication1.Models.visitorLog>
+@section Scripts {
+   
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/sayac.js" defer></script>
+
+   
+    <script>
+        
+        $(document).ready(function () {
+               $("#tabloArama").on("keyup", function () {
+                var arananDeger = $(this).val().toLowerCase();
+                $("table tbody tr").each(function () {
+                    var satirMetni = $(this).text().toLowerCase();
+
+                    if (satirMetni.indexOf(arananDeger) > -1) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+<div class="container mt-5">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="p-4 bg-light border border-light-subtle rounded-3 d-flex justify-content-between align-items-center shadow-sm">
+                <div>
+                    <h3 class="fw-black text-dark m-0 tracking-tight">KARDEMİR</h3>
+                    <small class="text-muted text-uppercase tracking-wider font-monospace" style="font-size: 11px;">Canlı İzleme & Operasyon Listesi</small>
+                </div>
+                <div>
+                    <a href="/visitorLogs/Create" class="btn btn-dark btn-sm fw-bold px-4 py-2 rounded-2 shadow-sm">
+                        + Yeni Araç Girişi
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <div class="input-group input-group-lg shadow-sm">
+                            <input type="text" id="tabloArama" class="form-control border-dark" placeholder="Plaka ara..." autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted" style="font-size: 12px; letter-spacing: 0.5px;">
+                        <tr class="text-uppercase">
+                            <th class="ps-4 py-3">Plaka</th>
+                            <th class="py-3">Firma Adı</th>
+                            <th class="py-3">Sürücü Ad Soyad</th>
+                            <th class="py-3">Telefon No</th>
+                            <th class="py-3">Giriş Saati</th>
+                            <th class="py-3">İçerideki Süre</th>
+                            <th class="py-3 text-center">Durum</th>
+                            <th class="py-3 text-center">Detay</th>
+                            <th class="pe-4 py-3 text-end">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var arac in Model)
+                            {
+                                <tr id="arac-satiri-@arac.id">
+                                    <td class="ps-4 fw-bold text-dark">@arac.plaka</td>
+                                    <td class="text-secondary">@arac.Firma.FirmaAdi</td>
+                                    <td class="text-secondary">@arac.adSoyad</td>
+                                    <td class="text-secondary">@arac.telefonNo</td>
+                                    <td class="text-secondary">@arac.girisZamani.ToString("dd.MM.yyyy HH:mm")</td>
+
+                                    <td class="sayac-hucresi fw-bold" data-giris="@arac.girisZamani.ToString("yyyy-MM-ddTHH:mm:ss")">...</td>
+
+
+                                    <td class="durum-sutunu text-center">
+                                        @if (arac.asimVarMi)
+                                        {
+                                            <span class="badge rounded-pill" style="background-color: #f8d7da; color: #842029; border: 1px solid #f1aeb5; padding: 6px 12px;">Aşım var</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge rounded-pill" style="background-color: #e1f5fe; color: #0a5c36; border: 1px solid #b6d4fe; padding: 6px 12px;">Kurallara Uygun</span>
+                                        }
+
+                                    </td>
+
+                                    <td class="text-center">
+                                        <a asp-controller="visitorLogs" asp-action="Details" asp-route-id="@arac.id" class="btn btn-outline-secondary btn-sm fw-bold px-3 rounded-2">
+                                            İncele
+                                        </a>
+                                    </td>
+
+                                    <td class="pe-4 text-end">
+                                        <form asp-action="CikisYap" asp-controller="visitorLogs" method="post" class="m-0">
+                                            <input type="hidden" name="id" value="@arac.id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm fw-bold px-3 rounded-2">
+                                                Çıkış Ver
+                                            </button>
+                                        </form>
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <div class="fs-1 mb-2">🏭</div>
+                                    <h6 class="fw-bold text-secondary">İçeride Araç Bulunmuyor</h6>
+                                    <small>Şu an tüm operasyonlar normal seyrinde.</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+   
+

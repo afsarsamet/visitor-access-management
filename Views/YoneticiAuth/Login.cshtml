@@ -1,0 +1,44 @@
+﻿@{
+    
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <title>Sistem Yönetimi</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+</head>
+<body class="d-flex align-items-center justify-content-center" style="height: 100vh;">
+
+    <div class="card bg-light text-black shadow-lg border-0" style="width: 25rem; border-radius: 10px;">
+        <div class="card-body p-5">
+            <div class="text-center mb-4">
+                <h4 class="fw-bold" style="letter-spacing: 2px;">YÖNETİM PANELİ</h4>
+                <div style="height: 3px; background-color: black; width: 40px; margin: 10px auto; border-radius: 5px;"></div>
+            </div>
+
+            @if (ViewBag.Hata != null)
+            {
+                <div class="alert alert-danger text-center fw-bold p-2" style="font-size: 14px;">
+                    @ViewBag.Hata
+                </div>
+            }
+
+            <form method="post" action="/YoneticiGirisi">
+                <div class="mb-3">
+                    <label class="form-label text-black" style="font-size: 12px; letter-spacing: 1px;">SİCİL NO</label>
+                    <input type="text" name="SicilNo" class="form-control bg-light text-black border-secondary shadow-none" autocomplete="off" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label text-black" style="font-size: 12px; letter-spacing: 1px;">ŞİFRE</label>
+                    <input type="password" name="sifre" class="form-control bg-light text-black border-secondary shadow-none" required>
+                </div>
+                <button type="submit"  class="bg-light btn w-100 fw-bold shadow-sm">SİSTEME GİR</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
