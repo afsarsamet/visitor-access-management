@@ -1,160 +1,262 @@
-# Kardemir Ziyaretçi Araç Takip Sistemi
+# Visitor Access Management System
 
-Kardemir bünyesinde gerçekleştirilen zorunlu yaz stajı kapsamında geliştirilen bu proje, tesise giriş yapan ziyaretçi araçlarının kayıt altına alınmasını, içeride kalma sürelerinin takip edilmesini, çıkış işlemlerinin yönetilmesini ve geçmiş kayıtların raporlanmasını sağlayan web tabanlı bir uygulamadır.
+[🇹🇷 Türkçe README](README_TR.md)
 
-Uygulama; **ASP.NET Core MVC**, **Entity Framework Core**, **SQL Server** ve **SignalR** kullanılarak geliştirilmiştir.
+A web-based visitor and vehicle access management system built with **ASP.NET Core MVC**, **Entity Framework Core**, **SQL Server**, and **SignalR**.
 
-## Projenin Amacı
+The application is designed to manage visitor vehicle entry and exit operations, track vehicles currently inside the facility, handle company approval workflows, detect overstays, and generate Excel reports.
 
-Sistemin temel amacı, güvenlik personelinin ziyaretçi araç giriş-çıkış işlemlerini merkezi ve düzenli biçimde yönetebilmesini sağlamaktır.
+> Originally developed as a software engineering internship project for visitor and vehicle access management in an industrial facility.
 
-Uygulama ile:
+---
 
-* Ziyaretçi ve araç bilgileri kaydedilebilir.
-* Araçların ziyaret ettiği firma autocomplete alanıyla seçilebilir.
-* Sistemde bulunmayan firmalar yönetici onayına gönderilebilir.
-* Tesiste bulunan araçlar anlık olarak görüntülenebilir.
-* Araçların giriş ve çıkış zamanları kaydedilebilir.
-* Dört saatten uzun süre içeride kalan araçlar tespit edilebilir.
-* Süre aşımı bilgisi SignalR ile açık ekranlara gerçek zamanlı iletilebilir.
-* Tarih ve aşım durumuna göre rapor oluşturulabilir.
-* Raporlar Excel formatında indirilebilir.
-* Yönetici tarafından yeni güvenlik personeli oluşturulabilir.
+## Features
 
-## Kullanılan Teknolojiler
+* Visitor and vehicle entry registration
+* Vehicle exit tracking
+* Company autocomplete search
+* Company approval workflow for unregistered companies
+* Real-time vehicle overstay notifications with SignalR
+* Background vehicle duration monitoring
+* Cookie-based authentication
+* Role-based authorization for security personnel and administrators
+* Secure password hashing with BCrypt
+* Temporary password generation using the Web Crypto API
+* Date-based report filtering
+* Excel report generation with ClosedXML
+* SQL Server data persistence with Entity Framework Core
 
-| Teknoloji              | Kullanım amacı                          |
-| ---------------------- | --------------------------------------- |
-| .NET 8                 | Uygulamanın çalışma platformu           |
-| ASP.NET Core MVC       | Sunucu tarafı web mimarisi              |
-| C#                     | Backend geliştirme dili                 |
-| Entity Framework Core  | Veritabanı işlemleri ve ORM             |
-| SQL Server             | Kalıcı veri depolama                    |
-| SignalR                | Gerçek zamanlı süre aşımı bildirimi     |
-| Razor View             | Dinamik HTML ekranları                  |
-| JavaScript / jQuery    | İstemci tarafı işlemler ve AJAX         |
-| jQuery UI Autocomplete | Firma arama ve öneri sistemi            |
-| Bootstrap              | Arayüz düzeni ve responsive tasarım     |
-| BCrypt.Net             | Parolaların güvenli biçimde hashlenmesi |
-| ClosedXML              | Excel raporu oluşturulması              |
+---
 
-## Temel Özellikler
+## Tech Stack
 
-### Kimlik Doğrulama ve Yetkilendirme
+| Technology             | Purpose                              |
+| ---------------------- | ------------------------------------ |
+| .NET 8                 | Application runtime                  |
+| ASP.NET Core MVC       | Backend web framework                |
+| C#                     | Backend programming language         |
+| Entity Framework Core  | ORM and database access              |
+| SQL Server             | Relational database                  |
+| SignalR                | Real-time communication              |
+| Razor Views            | Server-side rendered UI              |
+| JavaScript / jQuery    | Client-side functionality            |
+| jQuery UI Autocomplete | Company search suggestions           |
+| Bootstrap              | Responsive UI design                 |
+| BCrypt.Net             | Password hashing                     |
+| ClosedXML              | Excel report generation              |
+| Web Crypto API         | Secure temporary password generation |
 
-* Cookie tabanlı kullanıcı oturumu
-* Güvenlik ve Admin rolleri
-* BCrypt ile parola doğrulama
-* Role göre Controller erişim kontrolü
-* Kullanıcı bilgilerinin claim yapısıyla taşınması
+---
 
-### Araç Giriş ve Çıkış Yönetimi
+## Application Architecture
 
-* Plaka, sürücü, telefon, kişi sayısı ve ziyaret nedeni kaydı
-* Firma ile foreign key ilişkisi
-* Giriş zamanının sunucu tarafından oluşturulması
-* Çıkışı gerçekleştiren personelin sicil ve ad-soyad bilgisinin kaydedilmesi
-* Tesiste bulunan araçların ayrı listelenmesi
-
-### Firma Autocomplete Sistemi
-
-Kullanıcının yazdığı firma adı AJAX ile sunucuya gönderilir. Aktif firmalar SQL Server üzerinde aranır ve sonuçlar JSON formatında istemciye döndürülür.
-
-Kullanıcıya firma adı gösterilirken forma gerçek kayıt değeri olarak `FirmaId` yazılır:
+The application follows the **MVC (Model-View-Controller)** architecture.
 
 ```text
-Görünen değer: KARDEMİR A.Ş.
-Kaydedilen değer: FirmaId = 5
-```
-
-Bu yapı, firma adlarının tekrar tekrar yazılmasını ve yazım farklılıklarından kaynaklanan veri tutarsızlıklarını önler.
-
-### Yeni Firma Talep Sistemi
-
-Firma autocomplete sonuçlarında bulunamazsa kullanıcı yeni firma talebi oluşturabilir.
-
-Talep akışı:
-
-```text
-Güvenlik personeli firma adını bildirir
-        ↓
-FirmaTalepleri tablosuna kayıt eklenir
-        ↓
-Yönetici talebi inceler
-        ↓
-Talep onaylanırsa Firmalar tablosuna eklenir
-        ↓
-Firma autocomplete sonuçlarında görünür
-```
-
-### Süre Kontrolü ve SignalR
-
-`SureKontrolIscisi`, uygulama çalıştığı sürece arka planda belirli aralıklarla tesiste bulunan araçları kontrol eder.
-
-Dört saati aşan bir araç bulunduğunda:
-
-1. Araç kaydının aşım durumu güncellenir.
-2. `IHubContext<AracHub>` üzerinden SignalR mesajı gönderilir.
-3. Açık olan araç listesi ekranındaki ilgili satır sayfa yenilenmeden güncellenir.
-
-### Personel ve Geçici Parola Oluşturma
-
-Yeni personel oluşturulurken tarayıcı tarafında Web Crypto API kullanılarak rastgele geçici parola üretilir.
-
-Parola üretiminde:
-
-* Büyük harf
-* Küçük harf
-* Rakam
-* Özel karakter
-* `crypto.getRandomValues()`
-* Fisher-Yates karıştırma algoritması
-
-kullanılır.
-
-Üretilen açık parola sunucuya ulaştıktan sonra BCrypt ile hashlenir. Veritabanında açık parola saklanmaz.
-
-### Raporlama
-
-Araç kayıtları:
-
-* Başlangıç tarihi
-* Bitiş tarihi
-* Süre aşımı durumu
-
-alanlarına göre filtrelenebilir. Sonuçlar ClosedXML kullanılarak `.xlsx` formatında indirilebilir.
-
-## Proje Mimarisi
-
-Uygulama MVC mimarisini kullanır:
-
-```text
-Kullanıcı / Tarayıcı
-        ↓ HTTP
-View — Razor, HTML, JavaScript
-        ↓
-Controller — İstek ve iş akışı yönetimi
-        ↓
-Entity Framework Core — LINQ ve veri erişimi
-        ↓
+Browser / User
+      ↓ HTTP
+Razor View + JavaScript
+      ↓
+Controller
+      ↓
+Entity Framework Core
+      ↓
 SQL Server
 ```
 
-Gerçek zamanlı bildirim akışı:
+For real-time overstay notifications:
 
 ```text
-SureKontrolIscisi
-        ↓
-IHubContext<AracHub>
-        ↓
-SignalR bağlantısı
-        ↓
-wwwroot/js/sayac.js
-        ↓
-Araç listesi ekranı
+Background Service
+      ↓
+Database Check
+      ↓
+SignalR Hub
+      ↓
+Connected Browsers
+      ↓
+UI Update Without Page Refresh
 ```
 
-## Klasör Yapısı
+---
+
+## Authentication & Authorization
+
+The application uses cookie-based authentication.
+
+After a successful login:
+
+1. The user's credentials are verified.
+2. The password is compared against its BCrypt hash.
+3. User information such as employee number, full name, and role is stored as claims.
+4. ASP.NET Core creates a protected authentication cookie.
+5. The authentication middleware restores the authenticated user on subsequent requests.
+
+The application currently contains two main roles:
+
+* **Security**
+* **Admin**
+
+Role-based authorization is used to restrict access to administrative operations.
+
+---
+
+## Vehicle Entry & Exit Management
+
+Security personnel can register visitor vehicles with information such as:
+
+* License plate
+* Visitor full name
+* Phone number
+* Number of visitors
+* Visit reason
+* Company
+* Entry time
+
+The entry time is generated on the server.
+
+When a vehicle leaves the facility, the application stores:
+
+* Exit time
+* Employee number of the security personnel
+* Full name of the security personnel
+
+This provides traceability for entry and exit operations.
+
+---
+
+## Company Autocomplete
+
+The company field uses an AJAX-based autocomplete system.
+
+When the user starts typing a company name:
+
+```text
+User Input
+   ↓
+AJAX GET Request
+   ↓
+Company Search Endpoint
+   ↓
+Entity Framework Query
+   ↓
+SQL Server
+   ↓
+JSON Response
+   ↓
+Autocomplete Suggestions
+```
+
+Only active companies are returned.
+
+Instead of storing the company name directly in every visitor record, the system stores the related `CompanyId`.
+
+Conceptually:
+
+```text
+VisitorLog.CompanyId
+        ↓
+Company.CompanyId
+```
+
+This provides a normalized relational database structure and reduces duplicated or inconsistent company names.
+
+---
+
+## Company Approval Workflow
+
+If a company cannot be found through autocomplete, security personnel can submit a new company request.
+
+The workflow is:
+
+```text
+Security personnel submits company name
+        ↓
+Company request is stored
+        ↓
+Administrator reviews the request
+        ↓
+Approved request becomes an active company
+        ↓
+Company becomes available in autocomplete
+```
+
+The employee information of the person submitting the request is obtained from authenticated claims rather than user-editable form values.
+
+---
+
+## Real-Time Overstay Detection
+
+A background service periodically checks vehicles that are still inside the facility.
+
+If a vehicle remains inside for more than the configured duration:
+
+```text
+Background Service
+       ↓
+Vehicle Duration Check
+       ↓
+Overstay Detected
+       ↓
+Database Updated
+       ↓
+SignalR Event
+       ↓
+Connected Browser
+       ↓
+Vehicle Row Updated
+```
+
+SignalR allows the server to push notifications directly to connected clients without requiring continuous AJAX polling.
+
+---
+
+## Temporary Password Generation
+
+When a new security employee is created, the application generates a temporary password on the client side.
+
+The password generator uses:
+
+* Uppercase characters
+* Lowercase characters
+* Numbers
+* Special characters
+* `crypto.getRandomValues()`
+* Fisher-Yates shuffle algorithm
+
+The Web Crypto API is used instead of `Math.random()` because it provides cryptographically secure random values.
+
+The generated password is sent to the backend over HTTPS and hashed with BCrypt before being stored in the database.
+
+Plain-text passwords are not stored in the database.
+
+---
+
+## Reporting
+
+Vehicle records can be filtered by:
+
+* Start date
+* End date
+* Overstay status
+
+Entity Framework Core dynamically builds the database query based on the selected filters.
+
+Reports can also be exported as `.xlsx` files using **ClosedXML**.
+
+The generated report may include:
+
+* License plate
+* Visitor information
+* Company
+* Entry time
+* Exit time
+* Overstay status
+* Security personnel responsible for the exit
+
+---
+
+## Project Structure
 
 ```text
 WebApplication1/
@@ -166,161 +268,222 @@ WebApplication1/
 │   ├── visitorLogsController.cs
 │   ├── YoneticiAuthController.cs
 │   └── YoneticiController.cs
+│
 ├── Hubs/
 │   └── AracHub.cs
+│
 ├── Migrations/
+│
 ├── Models/
 │   ├── dbContextClass.cs
 │   ├── Firma.cs
 │   ├── FirmaTalep.cs
 │   ├── Personel.cs
 │   └── visitorLog.cs
+│
 ├── Services/
 │   └── SureKontrolIscisi.cs
+│
 ├── Views/
+│
 ├── wwwroot/
-│   └── js/sayac.js
+│   └── js/
+│       └── sayac.js
+│
 ├── Program.cs
 ├── appsettings.json
 └── WebApplication1.csproj
 ```
 
-## Veritabanı Modelleri
+---
 
-### `Personel`
+## Database Models
 
-Sisteme giriş yapabilen güvenlik ve yönetici kullanıcılarını temsil eder.
+### Personel
 
-### `Firma`
+Represents users who can authenticate to the system.
 
-Araçların ziyaret ettiği aktif veya pasif firmaları temsil eder.
+Includes information such as:
 
-### `FirmaTalep`
+* Employee number
+* Full name
+* Role
+* Account status
+* Password hash
 
-Sistemde bulunmayan firmalar için oluşturulan yönetici onay taleplerini temsil eder.
+### Firma
 
-### `visitorLog`
+Represents companies that can be selected during visitor registration.
 
-Araçların giriş, çıkış ve ziyaret bilgilerini temsil eder.
+### FirmaTalep
 
-`visitorLog` ile `Firma` arasında bire-çok ilişki vardır:
+Represents company registration requests waiting for administrator approval.
+
+### visitorLog
+
+Represents visitor vehicle entry and exit records.
+
+A company can be associated with multiple visitor records:
 
 ```text
-Bir firma → Birçok ziyaretçi araç kaydı
-Bir araç kaydı → Bir firma
+One Company
+    ↓
+Many Visitor Logs
 ```
 
-## Kurulum
+---
 
-### Gereksinimler
+## Getting Started
+
+### Requirements
+
+Make sure the following tools are installed:
 
 * .NET 8 SDK
 * SQL Server
-* Visual Studio 2022 veya Visual Studio Code
+* Visual Studio 2022 or Visual Studio Code
 * Git
 
-### 1. Repository’yi Klonlayın
+---
+
+### Clone the Repository
 
 ```bash
 git clone <REPOSITORY_URL>
 cd WebApplication1
 ```
 
-### 2. NuGet Paketlerini Yükleyin
+---
+
+### Restore Dependencies
 
 ```bash
 dotnet restore
 ```
 
-### 3. Connection String Tanımlayın
+---
 
-Geliştirme ortamında bağlantı bilgisini kaynak kodda tutmak yerine .NET User Secrets kullanılması önerilir.
+### Configure the Database Connection
+
+Sensitive configuration values should not be stored directly in the repository.
+
+For local development, .NET User Secrets can be used:
 
 ```bash
 dotnet user-secrets init
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=SUNUCU_ADI;Database=KDProject;Trusted_Connection=True;TrustServerCertificate=True;"
 ```
 
-SQL Server kullanıcı adı ve parola ile kullanılacaksa connection string buna göre düzenlenmelidir.
+Set the SQL Server connection string:
 
-### 4. Veritabanını Oluşturun
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=YOUR_SERVER;Database=VisitorAccessDb;Trusted_Connection=True;TrustServerCertificate=True;"
+```
 
-Entity Framework CLI yüklü değilse:
+If an initial administrator password is required:
+
+```bash
+dotnet user-secrets set "InitialAdminPassword" "YOUR_SECURE_PASSWORD"
+```
+
+---
+
+### Apply Database Migrations
+
+If the Entity Framework CLI is not installed:
 
 ```bash
 dotnet tool install --global dotnet-ef
 ```
 
-Migration’ları veritabanına uygulayın:
+Apply the migrations:
 
 ```bash
 dotnet ef database update
 ```
 
-### 5. Uygulamayı Çalıştırın
+---
+
+### Run the Application
 
 ```bash
 dotnet run
 ```
 
-Terminalde gösterilen HTTPS adresini tarayıcıda açın.
+Open the HTTPS address displayed in the terminal.
 
-## Yapılandırma ve Güvenlik Notları
+---
 
-Bu proje bir staj çalışmasıdır. Canlı ortamda kullanılmadan önce aşağıdaki iyileştirmeler yapılmalıdır:
+## Security Considerations
 
-* Varsayılan yönetici parolası kaynak koddan kaldırılmalıdır.
-* Parolalar ve connection string User Secrets veya secret manager ile yönetilmelidir.
-* İlk girişte parola değiştirme zorunluluğu eklenmelidir.
-* Giriş denemelerine rate limiting uygulanmalıdır.
-* Tüm veri değiştiren POST endpoint’lerine anti-forgery doğrulaması eklenmelidir.
-* `ReportsController` ve `AracHub` uygun rollerle yetkilendirilmelidir.
-* Araç oluşturma işleminde entity yerine ViewModel kullanılmalıdır.
-* `FirmaId` sunucu tarafında aktif ve geçerli firma olarak doğrulanmalıdır.
-* Sicil numarası, T.C. kimlik numarası ve firma adı için gerekli unique index’ler eklenmelidir.
-* Firma silme davranışı geçmiş araç kayıtlarını koruyacak biçimde düzenlenmelidir.
-* Tarihler UTC olarak saklanmalıdır.
-* Dört saat aşımı çıkış işlemi sırasında da kesin olarak hesaplanmalıdır.
+The project applies several security-related practices, including:
 
-> **Uyarı:** Gerçek şirket, personel, ziyaretçi veya bağlantı bilgileri herkese açık bir GitHub repository’sine yüklenmemelidir. Repository mümkünse private tutulmalıdır.
+* BCrypt password hashing
+* Cookie-based authentication
+* Role-based authorization
+* Claims-based user information
+* Server-generated entry timestamps
+* User Secrets for sensitive local configuration
+* Entity Framework parameterized queries
 
-## Geliştirilebilecek Özellikler
+As the project evolves, additional improvements may include:
 
-* İlk girişte parola değiştirme ekranı
-* Personel hesap kilitleme ve parola sıfırlama
-* Firma ve personel yönetim panelleri
-* Dashboard ve grafiksel istatistikler
-* SignalR bağlantı grupları
-* E-posta veya SMS bildirimleri
-* Audit log sistemi
-* Unit ve integration testleri
-* Docker desteği
-* Merkezi hata yönetimi ve loglama
-* Sayfalama, sıralama ve gelişmiş arama
+* Anti-forgery validation for all state-changing requests
+* Server-side validation with dedicated ViewModels
+* Login rate limiting
+* First-login password reset
+* Audit logging
+* UTC-based time handling
+* Database-level unique constraints
+* Additional authorization for real-time communication endpoints
 
-## Teknik Kazanımlar
+---
 
-Bu proje kapsamında aşağıdaki konular uygulanmıştır:
+## Possible Future Improvements
 
-* ASP.NET Core MVC mimarisi
-* HTTP request pipeline ve middleware yapısı
+* Unit and integration tests
+* GitHub Actions CI pipeline
+* Docker support
+* Audit log system
+* Account lockout and password reset
+* Dashboard and statistics
+* Pagination and advanced filtering
+* Improved validation with ViewModels
+* Email or SMS notifications
+* Centralized exception handling and logging
+* Deployment to a cloud environment
+
+---
+
+## What I Practiced
+
+This project provided practical experience with:
+
+* ASP.NET Core MVC
+* Entity Framework Core
+* SQL Server
+* LINQ
 * Dependency Injection
+* HTTP request pipeline
+* Middleware
 * Cookie Authentication
+* Claims
 * Role-based Authorization
-* Claims yapısı
-* Entity Framework Core ve LINQ
-* Code First Migration
-* Foreign key ve navigation property
-* AJAX ve JSON iletişimi
-* SignalR ile gerçek zamanlı iletişim
-* Background Service
-* BCrypt parola hashleme
+* Code First Migrations
+* Foreign Keys
+* Navigation Properties
+* AJAX
+* JSON
+* SignalR
+* Background Services
+* BCrypt
 * Web Crypto API
-* Fisher-Yates algoritması
-* Excel raporu oluşturma
+* Fisher-Yates Shuffle
+* Excel report generation
 
-## Proje Durumu
+---
 
-Proje staj çalışması kapsamında geliştirilmiş çalışan bir prototiptir. Üretim ortamına alınmadan önce güvenlik, doğrulama, test ve deployment süreçlerinin geliştirilmesi gerekmektedir.
+## Project Status
 
+The application was developed as a functional internship project and is currently maintained as a personal software development portfolio project.
 
+Further refactoring, testing, security hardening, and deployment improvements may be added over time.
